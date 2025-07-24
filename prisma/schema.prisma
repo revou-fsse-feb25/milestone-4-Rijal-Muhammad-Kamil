@@ -1,0 +1,86 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  // output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CUSTOMER
+  ADMIN
+}
+
+enum AccountType {
+  SAVINGS
+  CHECKING
+}
+
+enum TransactionType {
+  DEPOSIT
+  WITHDRAW
+  TRANSFER
+}
+
+enum TransactionStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+model User {
+  id         Int       @id @default(autoincrement())
+  name       String
+  email      String    @unique
+  password   String
+  role       Role      @default(CUSTOMER)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  accounts   Account[]
+}
+
+model Account {
+  id                    Int           @id @default(autoincrement())
+  userId                Int
+  balance               Decimal       @default(0.0) @db.Decimal(18, 2)
+  accountType           AccountType   @default(SAVINGS)
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  user                  User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Relasi transaksi keluar dan masuk
+  sentTransactions      Transaction[] @relation("SentTransactions")
+  receivedTransactions  Transaction[] @relation("ReceivedTransactions")
+
+  @@index([userId])
+  @@unique([userId, accountType]) // 1 user tidak boleh punya 2 akun dari jenis yang sama
+}
+
+model Transaction {
+  id                     Int               @id @default(autoincrement())
+  sourceAccountId        Int
+  destinationAccountId   Int?
+  type                   TransactionType
+  amount                 Decimal           @db.Decimal(18, 2)
+  status                 TransactionStatus @default(PENDING)
+  timestamp              DateTime          @default(now())
+
+  // Relasi ke pengirim
+  sourceAccount          Account           @relation("SentTransactions", fields: [sourceAccountId], references: [id], onDelete: Cascade)
+
+  // Relasi ke penerima (opsional jika bukan transfer)
+  destinationAccount     Account?          @relation("ReceivedTransactions", fields: [destinationAccountId], references: [id], onDelete: SetNull)
+
+  @@index([sourceAccountId])
+  @@index([destinationAccountId])
+}
