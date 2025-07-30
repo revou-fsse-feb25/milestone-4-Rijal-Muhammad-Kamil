@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
 import { UserRepository } from 'src/user/repository/repository';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -23,7 +23,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const payload = { sub: user.id, email: user.email, role: user.role };
+    const payload = { id: user.id, email: user.email, role: user.role };
     const accessToken = this.jwtService.sign(payload);
 
     return {
@@ -31,21 +31,25 @@ export class AuthService {
     };
   }
 
-  async register(createUserDto: CreateUserDto): Promise<{ accessToken: string, user: User }> {
+  async register(createUserDto: CreateUserDto): Promise<{ accessToken: string; user: User }> {
     const existingUser = await this.userRepository.findByEmail(createUserDto.email);
     if (existingUser) {
-      throw new UnauthorizedException('Email already registered');
+      throw new ConflictException('Email already registered');
     }
 
     const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
-
     const newUser = await this.userRepository.createUser({
       email: createUserDto.email,
       password: hashedPassword,
       name: createUserDto.name,
+      role: createUserDto.role || 'CUSTOMER',
     });
 
-    const payload = { sub: newUser.id, email: newUser.email, role: newUser.role };
+    const payload = {
+      sub: newUser.id,
+      email: newUser.email,
+      role: newUser.role,
+    };
     const accessToken = this.jwtService.sign(payload);
 
     return {

@@ -1,34 +1,27 @@
-// import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-// import { AuthService } from '../service/auth.service';
-// import { CreateUserDto } from 'src/user/dto/create-user.dto';
-// import { UpdateUserDto } from 'src/user/dto/update-user.dto';
+import { Controller, Post, Body, Get, UseGuards } from '@nestjs/common';
+import { AuthService } from '../service/auth.service';
+import { CreateUserDto } from 'src/user/dto/create-user.dto';
+import { JwtAuthGuard } from '../../common/guard/jwt-auth.guard';
+import { CurrentUser } from '../../common/decorator/current-user.decorator';
+import { User } from '@prisma/client';
 
-// @Controller('auth')
-// export class AuthController {
-//   constructor(private readonly authService: AuthService) {}
+@Controller('auth')
+export class AuthController {
+  constructor(private readonly authService: AuthService) {}
 
-//   @Post()
-//   create(@Body() CreateUserDto: CreateUserDto) {
-//     return this.authService.create(CreateUserDto);
-//   }
+  @Post('register')
+  async register(@Body() createUserDto: CreateUserDto): Promise<{ accessToken: string; user: User }> {
+    return this.authService.register(createUserDto);
+  }
 
-//   @Get()
-//   findAll() {
-//     return this.authService.findAll();
-//   }
+  @Post('login')
+  async login(@Body() body: { email: string; password: string }): Promise<{ accessToken: string }> {
+    return this.authService.login(body.email, body.password);
+  }
 
-//   @Get(':id')
-//   findOne(@Param('id') id: string) {
-//     return this.authService.findOne(+id);
-//   }
-
-//   @Patch(':id')
-//   update(@Param('id') id: string, @Body() UpdateUserDto: UpdateUserDto) {
-//     return this.authService.update(+id, UpdateUserDto);
-//   }
-
-//   @Delete(':id')
-//   remove(@Param('id') id: string) {
-//     return this.authService.remove(+id);
-//   }
-// }
+  // @UseGuards(JwtAuthGuard)
+  // @Get('profile')
+  // async getProfile(@CurrentUser() user: User): Promise<User> {
+  //   return user;
+  // }
+}
