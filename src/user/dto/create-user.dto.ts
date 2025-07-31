@@ -26,6 +26,6 @@ export class CreateUserDto {
 
   @IsOptional()
   @IsEnum(Role, { message: 'Role hanya boleh CUSTOMER atau ADMIN' })
-  @Transform(({ value }) => value?.toUpperCase())
+  @Transform(({ value }) => value.toUpperCase())
   role: Role;
 }

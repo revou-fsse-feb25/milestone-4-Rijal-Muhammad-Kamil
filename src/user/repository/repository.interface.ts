@@ -8,5 +8,5 @@ export interface UserInterface {
   getUserById(id: number): Promise<User | null>;
   updateUser(id: number, data: UpdateUserDto): Promise<User>;
   deleteUser(id: number): Promise<User>;
-  findByEmail(email: string): Promise<User | null>;
+  findUserByEmail(email: string): Promise<User | null>;
 }

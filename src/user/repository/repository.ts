@@ -82,7 +82,7 @@ export class UserRepository implements UserInterface {
     }
   }
 
-  async findByEmail(email: string): Promise<User | null> {
+  async findUserByEmail(email: string): Promise<User | null> {
     try {
       const user = await this.prisma.user.findUnique({
         where: { email },

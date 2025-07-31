@@ -13,7 +13,7 @@ export class AuthService {
   ) {}
 
   async login(email: string, password: string): Promise<{ accessToken: string }> {
-    const user = await this.userRepository.findByEmail(email);
+    const user = await this.userRepository.findUserByEmail(email);
     if (!user) {
       throw new UnauthorizedException('Kredensial tidak valid');
     }
@@ -32,7 +32,7 @@ export class AuthService {
   }
 
   async register(createUserDto: CreateUserDto): Promise<{ accessToken: string; user: User }> {
-    const existingUser = await this.userRepository.findByEmail(createUserDto.email);
+    const existingUser = await this.userRepository.findUserByEmail(createUserDto.email);
     if (existingUser) {
       throw new ConflictException('Email sudah terdaftar');
     }
