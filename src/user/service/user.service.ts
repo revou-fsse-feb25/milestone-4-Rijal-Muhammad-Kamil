@@ -7,7 +7,6 @@ import { User } from '@prisma/client';
 export class UserService {
   constructor(private readonly userRepository: UserRepository) {}
 
-  // Mengambil data pengguna berdasarkan ID (memeriksa jika ID pengguna yang login sesuai)
   async getUser(id: number, currentUserId: number): Promise<User> {
     if (id !== currentUserId) {
       throw new ForbiddenException('Anda hanya bisa melihat data Anda sendiri');
@@ -22,7 +21,6 @@ export class UserService {
     return user;
   }
 
-  // Mengambil semua pengguna (memeriksa role admin)
   async getAllUsers(currentUser: User): Promise<User[]> {
     if (currentUser.role !== 'ADMIN') {
       throw new ForbiddenException('Hanya admin yang dapat mengakses semua pengguna');
@@ -37,7 +35,6 @@ export class UserService {
     return users;
   }
 
-  // Memperbarui data pengguna berdasarkan ID (memeriksa jika ID pengguna yang login sesuai)
   async updateUser(id: number, updateUserDto: UpdateUserDto, currentUserId: number): Promise<User> {
     if (id !== currentUserId) {
       throw new ForbiddenException('Anda hanya bisa memperbarui data Anda sendiri');
@@ -49,6 +46,6 @@ export class UserService {
       throw new NotFoundException('User not found');
     }
 
-    return this.userRepository.updateUser(id, updateUserDto);  // Memperbarui pengguna
+    return this.userRepository.updateUser(id, updateUserDto);
   }
 }

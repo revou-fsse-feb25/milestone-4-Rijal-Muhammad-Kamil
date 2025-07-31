@@ -15,12 +15,12 @@ export class AuthService {
   async login(email: string, password: string): Promise<{ accessToken: string }> {
     const user = await this.userRepository.findByEmail(email);
     if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('Kredensial tidak valid');
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('Kredensial tidak valid');
     }
 
     const payload = { id: user.id, email: user.email, role: user.role };
@@ -34,7 +34,7 @@ export class AuthService {
   async register(createUserDto: CreateUserDto): Promise<{ accessToken: string; user: User }> {
     const existingUser = await this.userRepository.findByEmail(createUserDto.email);
     if (existingUser) {
-      throw new ConflictException('Email already registered');
+      throw new ConflictException('Email sudah terdaftar');
     }
 
     const hashedPassword = await bcrypt.hash(createUserDto.password, 10);

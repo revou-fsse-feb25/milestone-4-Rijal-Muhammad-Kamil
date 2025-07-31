@@ -1,6 +1,6 @@
-import { IsString, IsNotEmpty, ValidateIf, MinLength, MaxLength, IsEmail, Matches, IsEnum } from 'class-validator';
+import { IsString, IsNotEmpty, ValidateIf, MinLength, MaxLength, IsEmail, Matches, IsOptional, IsEnum } from 'class-validator';
 import { Transform } from 'class-transformer';
-import { Role } from 'src/common/enum/role.enum';
+import { Role } from '@prisma/client';
 
 export class CreateUserDto {
   @IsString()
@@ -20,10 +20,11 @@ export class CreateUserDto {
   @IsNotEmpty({ message: 'Password harus diisi' })
   @MinLength(6, { message: 'Password harus terdiri dari minimal 6 karakter' })
   @MaxLength(30, { message: 'Password tidak boleh lebih dari 30 karakter' })
-  @Matches(/^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{6,30}$/, {message: 'Password harus mengandung setidaknya satu huruf kapital, satu angka, dan satu karakter spesial' })
+  @Matches(/^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{6,30}$/, { message: 'Password harus mengandung setidaknya satu huruf kapital, satu angka, dan satu karakter spesial' })
   @Transform(({ value }) => value.trim())
   password: string;
 
+  @IsOptional()
   @IsEnum(Role, { message: 'Role hanya boleh CUSTOMER atau ADMIN' })
   @Transform(({ value }) => value?.toUpperCase())
   role: Role;
