@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/service/prisma.service';
 import { Transaction, TransactionType, TransactionStatus } from '@prisma/client';
 import { CreateTransactionDto } from '../dto/create-transaction.dto';
@@ -6,6 +6,21 @@ import { CreateTransactionDto } from '../dto/create-transaction.dto';
 @Injectable()
 export class TransactionRepository {
   constructor(private readonly prisma: PrismaService) {}
+
+  async updateAccountBalance(accountId: number, amount: number) {
+    try {
+      return await this.prisma.account.update({
+        where: { id: accountId },
+        data: {
+          balance: {
+            increment: amount,
+          },
+        },
+      });
+    } catch (error) {
+      throw new BadRequestException('Terjadi kesalahan saat memperbarui saldo akun');
+    }
+  }
 
   async deposit(data: CreateTransactionDto): Promise<Transaction> {
     try {
@@ -19,9 +34,6 @@ export class TransactionRepository {
       });
       return transaction;
     } catch (error) {
-      if (error.code === 'P2002') {
-        throw new BadRequestException('Terjadi duplikasi data');
-      }
       throw new BadRequestException('Terjadi kesalahan saat membuat transaksi deposit');
     }
   }
@@ -38,9 +50,6 @@ export class TransactionRepository {
       });
       return transaction;
     } catch (error) {
-      if (error.code === 'P2002') {
-        throw new BadRequestException('Terjadi duplikasi data');
-      }
       throw new BadRequestException('Terjadi kesalahan saat membuat transaksi withdraw');
     }
   }
@@ -52,7 +61,7 @@ export class TransactionRepository {
       where: { id: sourceAccountId },
     });
 
-    if (!sourceAccount || sourceAccount.balance.toNumber() < amount) {
+    if (!sourceAccount || sourceAccount.balance === undefined || sourceAccount.balance.toNumber() < amount) {
       throw new BadRequestException('Saldo tidak cukup untuk melakukan transfer');
     }
 
@@ -75,22 +84,32 @@ export class TransactionRepository {
         },
       });
 
+      const sourceBalance = sourceAccount.balance?.toNumber() || 0;
+      const destinationBalance = destinationAccount.balance?.toNumber() || 0;
+
       await this.prisma.account.update({
         where: { id: sourceAccountId },
-        data: { balance: sourceAccount.balance.toNumber() - amount },
+        data: { balance: sourceBalance - amount },
       });
 
       await this.prisma.account.update({
         where: { id: destinationAccountId },
-        data: { balance: destinationAccount.balance.toNumber() + amount },
+        data: { balance: destinationBalance + amount },
       });
 
       return transaction;
     } catch (error) {
-      if (error.code === 'P2025') {
-        throw new NotFoundException('Transaksi atau akun tidak ditemukan');
-      }
       throw new BadRequestException('Terjadi kesalahan saat melakukan transfer');
+    }
+  }
+
+  async getTransactionById(id: number): Promise<Transaction | null> {
+    try {
+      return await this.prisma.transaction.findUnique({
+        where: { id },
+      });
+    } catch (error) {
+      throw new NotFoundException('Transaksi tidak ditemukan');
     }
   }
 
@@ -102,23 +121,21 @@ export class TransactionRepository {
         },
       });
     } catch (error) {
-      if (error.code === 'P2025') {
-        throw new NotFoundException('Transaksi tidak ditemukan');
-      }
       throw new BadRequestException('Terjadi kesalahan saat mengambil transaksi');
     }
   }
 
-  async getTransactionById(id: number): Promise<Transaction | null> {
+  async getAccountById(accountId: number) {
     try {
-      return await this.prisma.transaction.findUnique({
-        where: { id },
+      const account = await this.prisma.account.findUnique({
+        where: { id: accountId },
       });
-    } catch (error) {
-      if (error.code === 'P2025') {
-        throw new NotFoundException('Transaksi tidak ditemukan');
+      if (!account) {
+        throw new NotFoundException('Akun tidak ditemukan');
       }
-      throw new NotFoundException('Transaksi tidak ditemukan');
+      return account;
+    } catch (error) {
+      throw new BadRequestException('Terjadi kesalahan saat mengambil akun');
     }
   }
 }

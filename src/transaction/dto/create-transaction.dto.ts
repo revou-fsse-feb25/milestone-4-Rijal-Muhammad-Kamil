@@ -10,7 +10,7 @@ export class CreateTransactionDto {
   @IsOptional()
   @IsInt({ message: 'destinationAccountId harus berupa angka bulat' })
   @IsPositive({ message: 'destinationAccountId harus lebih besar dari 0' })
-  destinationAccountId?: number;
+  destinationAccountId: number;
 
   @IsEnum(TransactionType, { message: 'Tipe transaksi harus salah satu dari DEPOSIT, WITHDRAW, atau TRANSFER' })
   type: TransactionType;
