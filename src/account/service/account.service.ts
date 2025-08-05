@@ -8,22 +8,25 @@ export class AccountService {
   constructor(private readonly accountRepository: AccountRepository) {}
 
   async createAccount(createAccountDto: CreateAccountDto, user: User): Promise<Account> {
-    if (createAccountDto.userId !== user.id) {
-      throw new ForbiddenException('Anda hanya bisa membuat akun untuk diri sendiri');
-    }
+    const accountData = {
+      ...createAccountDto,
+      userId: user.id,
+    };
 
-    return this.accountRepository.createAccount(createAccountDto);
+    return this.accountRepository.createAccount(accountData);
   }
 
-  async getAllAccounts(user: any): Promise<Account[]> {
-    if (user.role !== 'ADMIN') {
-      throw new ForbiddenException('Hanya admin yang dapat mengakses semua akun');
+  async getAllAccounts(user: User): Promise<Account[]> {
+    let accounts: Account[];
+
+    if (user.role === 'ADMIN') {
+      accounts = await this.accountRepository.getAllAccounts();
+    } else {
+      accounts = await this.accountRepository.getAllAccounts(user.id);
     }
 
-    const accounts = await this.accountRepository.getAllAccounts(user.id);
-
     if (!accounts || accounts.length === 0) {
-      throw new NotFoundException('No accounts found');
+      throw new NotFoundException('Tidak ada akun yang ditemukan');
     }
 
     return accounts;
@@ -33,7 +36,7 @@ export class AccountService {
     const account = await this.accountRepository.getAccountById(id);
 
     if (!account) {
-      throw new NotFoundException('Account not found');
+      throw new NotFoundException('Tidak ada akun yang ditemukan');
     }
 
     if (account.userId !== user.id && user.role !== 'ADMIN') {
@@ -47,7 +50,7 @@ export class AccountService {
     const account = await this.accountRepository.getAccountById(id);
 
     if (!account) {
-      throw new NotFoundException('Account not found');
+      throw new NotFoundException('Tidak ada akun yang ditemukan');
     }
 
     if (account.userId !== user.id && user.role !== 'ADMIN') {
@@ -61,7 +64,7 @@ export class AccountService {
     const account = await this.accountRepository.getAccountById(id);
 
     if (!account) {
-      throw new NotFoundException('Account not found');
+      throw new NotFoundException('Tidak ada akun yang ditemukan');
     }
 
     if (account.userId !== user.id && user.role !== 'ADMIN') {

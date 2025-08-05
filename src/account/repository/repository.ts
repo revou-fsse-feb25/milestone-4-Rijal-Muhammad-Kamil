@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { AccountInterface } from './repository.interface';
 import { PrismaService } from 'src/prisma/service/prisma.service';
 import { Account } from '@prisma/client';
 import { CreateAccountDto } from '../dto/create-account.dto';
@@ -7,10 +8,10 @@ import { HttpException, HttpStatus } from '@nestjs/common';
 import { AccountType } from '@prisma/client';
 
 @Injectable()
-export class AccountRepository {
+export class AccountRepository implements AccountInterface {
   constructor(private readonly prisma: PrismaService) {}
 
-  async createAccount(data: CreateAccountDto): Promise<Account> {
+  async createAccount(data: CreateAccountDto & { userId: number }): Promise<Account> {
     try {
       return await this.prisma.account.create({
         data: {
@@ -27,10 +28,10 @@ export class AccountRepository {
     }
   }
 
-  async getAllAccounts(userId: number): Promise<Account[]> {
+  async getAllAccounts(userId?: number): Promise<Account[]> {
     try {
       return await this.prisma.account.findMany({
-        where: { userId },
+        where: userId ? { userId } : undefined,
       });
     } catch (error) {
       throw new HttpException('Failed to fetch accounts', HttpStatus.INTERNAL_SERVER_ERROR);
